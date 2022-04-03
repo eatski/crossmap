@@ -30,14 +30,14 @@ const places: Prisma.UserPlaceCreateManyInput [] = [
     {
         userId: 2,
         x: 300,
-        y: 400,
+        y: -50,
     }
 ]
 
 const main = async () => {
     // 初期化処理
-    await prisma.user.deleteMany({});
     await prisma.userPlace.deleteMany({});
+    await prisma.user.deleteMany({});
     await prisma.user.createMany({ data: users });
     await prisma.userPlace.createMany({ data: places });
 };
