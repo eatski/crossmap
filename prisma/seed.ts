@@ -24,8 +24,8 @@ const places: Prisma.UserPlaceCreateManyInput [] = [
     },
     {
         userId: 1,
-        x: 100,
-        y: 200,
+        x: 50,
+        y: -50,
     },
     {
         userId: 2,

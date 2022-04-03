@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { prismaClient } from "../lib/prisma";
+import { User, UserPlace } from '@prisma/client';
 
 type Player = {
   id: number,
@@ -54,9 +55,46 @@ const Home: NextPage<Props> = (props) => {
 
 export default Home
 
+const NEAR = 100;
+
+const getOthers = async (yourId: number,{x,y}: Place): Promise<[Player,Place][]> => {
+  const result = await prismaClient.userPlace.findMany({
+    where: {
+      AND: [
+        { y: { lte: y + NEAR, } },
+        { y: { gte: y - NEAR, } }, 
+        { x: { lte: x + NEAR, } }, 
+        { x: { gte: x - NEAR, } },
+        {
+          NOT: {
+            userId: yourId,
+          }
+        }
+      ],
+    },
+    include: {
+      user: true,
+    }
+  });
+  return result.map<[Player,Place]>(place => [userToViewModel(place.user), placeToViewModel(place)])
+}
+
+const placeToViewModel = (place: UserPlace): Place => {
+  return {
+    x: place.x,
+    y: place.y,
+  }
+}
+
+const userToViewModel = (user: User): Player => {
+  return {
+    id: user.id,
+    name: user.name,
+  }
+}
+
 
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
-  console.log(prismaClient.userPlace)
   // TODO: 認証
   const yourPlace = await prismaClient.userPlace.findFirst({
     include: {
@@ -71,17 +109,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
   const you = yourPlace.user;
   return {
     props: {
-      you: [{
-        id: you.id,
-        name: you.name,
-      }, {
-        x:yourPlace.x,
-        y:yourPlace.y
-      }
+      you: [userToViewModel(you), placeToViewModel(yourPlace)
     ],
-    others: [
-      
-    ]
+    others: await getOthers(you.id,yourPlace),
     }
   }
 }
